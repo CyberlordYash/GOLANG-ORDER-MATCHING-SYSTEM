@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:8
+    container_name: oms-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: oms
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      # auto-apply schema + seed on first boot
+      - ./db/migrate.sql:/docker-entrypoint-initdb.d/01-schema.sql
+
+  api:
+    build: .
+    container_name: oms-api
+    depends_on:
+      - db
+    # 1-liner DSN; you can also keep these in a .env file
+    environment:
+      MYSQL_DSN: root:pass@tcp(db:3306)/oms?parseTime=true
+    ports:
+      - "8080:8080"
+
+volumes:
+  db_data:

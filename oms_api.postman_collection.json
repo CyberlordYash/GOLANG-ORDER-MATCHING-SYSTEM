@@ -1,0 +1,85 @@
+{
+  "info": {
+    "name": "Order-Matching API (localhost)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "9c1b5e4a-babe-4d50-b4ff-omsexample"
+  },
+  "variable": [{ "key": "base_url", "value": "http://localhost:8080" }],
+  "item": [
+    {
+      "name": "Place Limit BUY",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{base_url}}/orders",
+          "host": ["{{base_url}}"],
+          "path": ["orders"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"symbol\": \"ACME\",\n  \"side\": \"buy\",\n  \"type\": \"limit\",\n  \"price\": 10.50,\n  \"quantity\": 100\n}"
+        }
+      },
+      "response": []
+    },
+
+    {
+      "name": "Place Market SELL (matches previous)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{base_url}}/orders",
+          "host": ["{{base_url}}"],
+          "path": ["orders"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"symbol\": \"ACME\",\n  \"side\": \"sell\",\n  \"type\": \"market\",\n  \"quantity\": 70\n}"
+        }
+      },
+      "response": []
+    },
+
+    {
+      "name": "Cancel Order (TODO)",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/orders/REPLACE_WITH_ID",
+          "host": ["{{base_url}}"],
+          "path": ["orders", "REPLACE_WITH_ID"]
+        }
+      },
+      "response": []
+    },
+
+    {
+      "name": "Get Order Book (TODO)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/orderbook?symbol=ACME",
+          "host": ["{{base_url}}"],
+          "path": ["orderbook"],
+          "query": [{ "key": "symbol", "value": "ACME" }]
+        }
+      },
+      "response": []
+    },
+
+    {
+      "name": "List Trades (TODO)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/trades",
+          "host": ["{{base_url}}"],
+          "path": ["trades"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
