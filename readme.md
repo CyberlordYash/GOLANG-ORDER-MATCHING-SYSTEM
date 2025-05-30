@@ -1,62 +1,101 @@
-# 🏦 Golang Order-Matching System
 
-Minimal matching engine (limit & market orders), raw SQL persistence, and a simple REST API.
+# Golang Order‑Matching System 🏦
+
+A minimal limit/market order‑matching engine written in Go.  
+* Raw **SQL** for persistence (no ORM)  
+* In‑memory matching core (heap‑based order book)  
+* REST + JSON transport via **Gin**
 
 ---
 
-## 📁 1 Clone & bootstrap
+## ✨ High‑Level Logic
 
-```bash
-# 1. grab the code
+1. **POST /orders**  
+   *Insert a new order, get a real DB id, match it in memory, persist any fills—all in one DB transaction.*
+
+2. **Engine**  
+   * Two price‐level heaps (bids max‑heap, asks min‑heap) + FIFO queues → O(log N) insert/remove  
+   * Price‑time priority: highest bid / lowest ask first, then earliest timestamp.
+
+3. **Persistence**  
+   * `orders` table stores live & historical orders (`status=open|filled|cancelled`).  
+   * `trades` table stores executions with FK back to both orders.
+
+---
+
+## 🐳 Quick Start
+
+///bash
 git clone https://github.com/yourname/golang-order-matching-system.git
 cd golang-order-matching-system
+go mod tidy                       # creates go.sum
 
-# 2. tidy Go deps (creates go.sum)
-go mod tidy
+docker compose up --build         # MySQL 8 + API on :8080
+///bash
+
+The API logs `⇨ listening on :8080` when ready.
+
+---
+
+## 🔗 Endpoint Reference (current state)
+
+| Method | Path | Payload / Query | Response | Status |
+|--------|------|-----------------|----------|--------|
+| `POST` | `/orders` | `{ "symbol":"ACME", "side":"buy", "type":"limit", "price":10.50, "quantity":100 }` | `200 OK` → `{ order_id, executions[] }` | **Implemented** |
+| `DELETE` | `/orders/:id` | – | `501 Not Implemented` | Stub |
+| `GET` | `/orderbook?symbol=ACME` | query `symbol` | `501 Not Implemented` | Stub |
+| `GET` | `/trades?symbol=ACME&limit=100` | optional `symbol`, `limit` | `501 Not Implemented` | Stub |
+
+### Example success (POST /orders)
+
+```jsonc
+{
+  "order_id": 1717000000123456000,
+  "executions": [
+    { "taker_id": 1717000000123456000, "maker_id": 1, "price": 10.5, "qty": 70 }
+  ]
+}
 ```
 
-🐳 2 One-command stack with Docker Compose
-Requires Docker 20+ (or Docker Desktop).
+### Example error
 
-2-a Create docker-compose.yml (already in repo)
-
-```bash
-version: "3.8"
-services:
-  db:
-    image: mysql:8
-    container_name: oms-mysql
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: pass
-      MYSQL_DATABASE: oms
-    ports: [ "3306:3306" ]
-    volumes:
-      - db_data:/var/lib/mysql
-      - ./db/migrate.sql:/docker-entrypoint-initdb.d/01-schema.sql
-
-  api:
-    build: .
-    container_name: oms-api
-    depends_on: [ db ]
-    environment:
-      MYSQL_DSN: root:pass@tcp(db:3306)/oms?parseTime=true
-    ports: [ "8080:8080" ]
-
-volumes: { db_data: {} }
+```jsonc
+{ "error": "price is required for limit orders" }
 ```
 
-Launch everything
+---
 
-```bash
-docker compose up --build
+## 📂 Folder Layout
+
+```
+.
+├── main.go
+├── api/             # HTTP handlers & DTOs
+├── engine/          # Matching core (pure Go)
+├── repo/            # Raw SQL data‑access
+├── models/          # Plain structs
+├── db/              # migrate.sql + db helpers
+├── config/          # env → DSN
+└── Dockerfile
 ```
 
-MySQL 8 starts, seeds schema from db/migrate.sql.
+---
 
-Go binary builds once, then the API prints:
-⇨ listening on :8080
+## 🚀 How `docker compose up --build` works
 
-Importable Postman collection
+1. **db** service → MySQL 8, seeds schema via mounted `db/migrate.sql`.
+2. **api** service → multistage Dockerfile builds static Go binary, starts API.
+3. Containers come up; visit `http://localhost:8080`.
 
-import oms_api.postman_collection.json ➜ Postman “Import”
+Re‑run without code changes: `docker compose up` (skips rebuild).  
+Rebuild API only: `docker compose build api && docker compose up`.
+
+---
+
+## 🛠️ Next Steps
+
+* Implement **cancel, orderbook, trades** handlers.  
+* Add unit tests (`go test ./engine/...`).  
+* Add CI (GitHub Actions) & healthchecks.
+
+Happy matching 🚀
