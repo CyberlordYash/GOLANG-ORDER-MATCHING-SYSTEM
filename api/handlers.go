@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 	"time"
-
+    "strconv"
 	"github.com/gin-gonic/gin"
 	"golang-order-matching-system/engine"
 	"golang-order-matching-system/models"
@@ -86,9 +86,25 @@ func chooseSellID(f engine.Fill, side string, takerID int64) int64 {
 }
 
 
-func (h *Handler) CancelOrder(c *gin.Context)  { c.Status(http.StatusNotImplemented) }
-func (h *Handler) GetOrderBook(c *gin.Context) { c.Status(http.StatusNotImplemented) }
-func (h *Handler) ListTrades(c *gin.Context)   { c.Status(http.StatusNotImplemented) }
+
+func (h *Handler) ListTrades(c *gin.Context) {
+	symbol := c.Query("symbol")            // optional filter
+	limitStr := c.DefaultQuery("limit", "100")
+
+	limit, err := strconv.Atoi(limitStr)   // allow ?limit=200 etc.
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "limit must be an integer"})
+		return
+	}
+
+	ctx := context.Background()
+	trades, err := h.TR.ListRecent(ctx, symbol, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, trades)
+}
 
 // helper until you switch to DB auto IDs
 func timeNowNano() int64 { return time.Now().UnixNano() }
