@@ -46,14 +46,17 @@ The API logs `⇨ listening on :8080` when ready.
 | `GET` | `/orderbook?symbol=ACME` |
 | `GET` | `/trades?symbol=ACME&limit=100` | optional `symbol`, `limit` | 
 
-### Example success (POST /orders)
+### sample body for  (POST /orders)
 
 ```jsonc
+
+endpoint- {{base_url}}/orders
 {
-  "order_id": 1717000000123456000,
-  "executions": [
-    { "taker_id": 1717000000123456000, "maker_id": 1, "price": 10.5, "qty": 70 }
-  ]
+  "symbol": "ACME",
+  "side": "buy",
+  "type": "limit",
+  "price": 1000.50,
+  "quantity": 1000
 }
 ```
 
