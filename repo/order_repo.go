@@ -59,3 +59,63 @@ func (r *OrderRepo) DB() *sql.DB {
 	return r.db
 }
 
+/* ---------- cancel ONE open order -------------------------------------- */
+
+func (r *OrderRepo) CancelOrder(ctx context.Context, id int64) error {
+	res, err := r.db.ExecContext(ctx,
+		`UPDATE orders SET status='cancelled'
+		 WHERE id=? AND status='open'`,
+		id)
+	if err != nil {
+		return err
+	}
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+/* ---------- order-book snapshot ---------------------------------------- */
+
+type BookLevel struct {
+	Price float64 `json:"price"`
+	Qty   int64   `json:"qty"`
+}
+
+func (r *OrderRepo) GetOrderBook(ctx context.Context, symbol string) (bids, asks []BookLevel, err error) {
+	// bids (buy side) – highest price first
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT price, SUM(qty_remaining)
+		FROM orders
+		WHERE symbol=? AND side='buy' AND status='open'
+		GROUP BY price ORDER BY price DESC`, symbol)
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		var lvl BookLevel
+		if err = rows.Scan(&lvl.Price, &lvl.Qty); err != nil {
+			return
+		}
+		bids = append(bids, lvl)
+	}
+	rows.Close()
+
+	// asks (sell side) – lowest price first
+	rows, err = r.db.QueryContext(ctx, `
+		SELECT price, SUM(qty_remaining)
+		FROM orders
+		WHERE symbol=? AND side='sell' AND status='open'
+		GROUP BY price ORDER BY price ASC`, symbol)
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		var lvl BookLevel
+		if err = rows.Scan(&lvl.Price, &lvl.Qty); err != nil {
+			return
+		}
+		asks = append(asks, lvl)
+	}
+	return
+}

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+    "database/sql"
 	"time"
     "strconv"
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,11 @@ type Handler struct {
 	Eng *engine.Engine
 	OR  *repo.OrderRepo
 	TR  *repo.TradeRepo
+}
+
+type BookLevel struct {
+	Price float64 `json:"price"`
+	Qty   int64   `json:"qty"`
 }
 
 func (h *Handler) PlaceOrder(c *gin.Context) {
@@ -106,5 +112,55 @@ func (h *Handler) ListTrades(c *gin.Context) {
 	c.JSON(http.StatusOK, trades)
 }
 
-// helper until you switch to DB auto IDs
+
+
+
+
+
+
+func (h *Handler) CancelOrder(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order id"})
+		return
+	}
+
+	ctx := context.Background()
+	if err := h.OR.CancelOrder(ctx, id); err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "order not open or not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "cancelled", "order_id": id})
+}
+
+
+
+func (h *Handler) GetOrderBook(c *gin.Context) {
+	symbol := c.Query("symbol")
+	if symbol == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "symbol query param required"})
+		return
+	}
+
+	ctx := context.Background()
+	bids, asks, err := h.OR.GetOrderBook(ctx, symbol)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"symbol": symbol,
+		"bids":   bids,
+		"asks":   asks,
+	})
+}
+
+
+
 func timeNowNano() int64 { return time.Now().UnixNano() }
