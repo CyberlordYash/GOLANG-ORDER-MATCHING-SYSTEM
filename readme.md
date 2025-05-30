@@ -42,8 +42,8 @@ The API logs `⇨ listening on :8080` when ready.
 | Method | Path | Payload / Query | Response | Status |
 |--------|------|-----------------|----------|--------|
 | `POST` | `/orders` | `{ "symbol":"ACME", "side":"buy", "type":"limit", "price":10.50, "quantity":100 }` | `200 OK` → `{ order_id, executions[] }` | **Implemented** |
-| `DELETE` | `/orders/:id` | – | `501 Not Implemented` | Stub |
-| `GET` | `/orderbook?symbol=ACME` | query `symbol` | `501 Not Implemented` | Stub |
+| `DELETE` | `/orders/:id` | – | `200 OK` | Stub |
+| `GET` | `/orderbook?symbol=ACME` | query `symbol` | `200 OK` | Stub |
 | `GET` | `/trades?symbol=ACME&limit=100` | optional `symbol`, `limit` | `501 Not Implemented` | Stub |
 
 ### Example success (POST /orders)
