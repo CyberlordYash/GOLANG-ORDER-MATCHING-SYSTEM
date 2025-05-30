@@ -92,10 +92,4 @@ Rebuild API only: `docker compose build api && docker compose up`.
 
 ---
 
-## 🛠️ Next Steps
 
-* Implement **cancel, orderbook, trades** handlers.  
-* Add unit tests (`go test ./engine/...`).  
-* Add CI (GitHub Actions) & healthchecks.
-
-Happy matching 🚀
