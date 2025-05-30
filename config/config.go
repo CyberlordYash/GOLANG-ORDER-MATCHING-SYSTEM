@@ -12,9 +12,9 @@ type Config struct {
 }
 
 // Load reads .env (if present) then env vars.
-// Falls back to sensible defaults so it’s hassle-free in dev.
+// Falls back to defaults.
 func Load() (*Config, error) {
-	_ = godotenv.Load() // ignore missing file
+	_ = godotenv.Load() 
 
 	dsn := os.Getenv("MYSQL_DSN")
 	if dsn == "" {

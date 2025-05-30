@@ -10,6 +10,7 @@ import (
 	"golang-order-matching-system/engine"
 	"golang-order-matching-system/models"
 	"golang-order-matching-system/repo"
+	 "log"
 )
 
 type Handler struct {
@@ -32,13 +33,13 @@ func (h *Handler) PlaceOrder(c *gin.Context) {
 
     ctx := context.Background()
     tx, err := h.OR.DB().BeginTx(ctx, nil)
-    if err != nil { /* handle */ }
+    if err != nil { log.Printf("failed to begin transaction: %v", err)}
     defer tx.Rollback()
 
     // 1. create *empty* order row to get real ID
     model := req.ToModel(0)                // id will be filled later
     id, err := h.OR.InsertTx(ctx, tx, model)
-    if err != nil { /* handle */ }
+    if err != nil { log.Printf("failed to begin transaction: %v", err)}
 
     // 2. run engine with the real ID
     engOrder := req.ToEngine(id)
@@ -47,7 +48,7 @@ func (h *Handler) PlaceOrder(c *gin.Context) {
     // 3. update remaining qty / status in the same tx
     if err := h.OR.UpdateRemainingTx(ctx, tx,
         id, engOrder.Qty, statusFromQty(engOrder.Qty)); err != nil {
-        /* handle */
+       log.Printf("failed to begin transaction: %v", err)
     }
 
     // 4. persist trades with correct IDs
@@ -59,10 +60,10 @@ func (h *Handler) PlaceOrder(c *gin.Context) {
             Price:       f.Price,
             Qty:         f.Qty,
         }
-        if err := h.TR.InsertTx(ctx, tx, t); err != nil { /* handle */ }
+        if err := h.TR.InsertTx(ctx, tx, t); err != nil {  log.Printf("error: %v", err) }
     }
 
-    if err := tx.Commit(); err != nil { /* handle */ }
+    if err := tx.Commit(); err != nil { log.Printf("error: %v", err) }
 
     c.JSON(http.StatusOK, PlaceOrderResp{
         OrderID:    id,

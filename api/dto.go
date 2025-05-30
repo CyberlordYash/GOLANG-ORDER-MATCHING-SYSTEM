@@ -11,7 +11,7 @@ type PlaceOrderReq struct {
 	Symbol   string   `json:"symbol" binding:"required"`
 	Side     string   `json:"side"   binding:"oneof=buy sell"`
 	Type     string   `json:"type"   binding:"oneof=limit market"`
-	Price    *float64 `json:"price,omitempty"`  // required if limit
+	Price    *float64 `json:"price,omitempty"` 
 	Quantity int64    `json:"quantity" binding:"gt=0"`
 }
 
