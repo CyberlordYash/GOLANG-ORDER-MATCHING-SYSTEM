@@ -32,7 +32,7 @@ func (r *TradeRepo) DB() *sql.DB {
 
 func (r *TradeRepo) ListRecent(ctx context.Context, symbol string, limit int) ([]models.Trade, error) {
 	if limit <= 0 || limit > 1000 {
-		limit = 100 // sensible guard-rail
+		limit = 100 
 	}
 
 	var rows *sql.Rows
